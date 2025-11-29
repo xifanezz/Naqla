@@ -1,0 +1,44 @@
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: naqla-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: naqla
+      POSTGRES_PASSWORD: naqla_secure_2024
+      POSTGRES_DB: naqla
+    volumes:
+      - ./data/timescaledb:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U naqla"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  meilisearch:
+    image: getmeili/meilisearch:latest
+    container_name: naqla-search
+    restart: unless-stopped
+    environment:
+      MEILI_MASTER_KEY: naqla_meili_key_2024
+      MEILI_ENV: production
+    volumes:
+      - ./data/meilisearch:/meili_data
+    ports:
+      - "127.0.0.1:7700:7700"
+
+  soketi:
+    image: quay.io/soketi/soketi:latest-16-alpine
+    container_name: naqla-realtime
+    restart: unless-stopped
+    environment:
+      SOKETI_DEBUG: "0"
+      SOKETI_DEFAULT_APP_ID: naqla
+      SOKETI_DEFAULT_APP_KEY: naqla_app_key
+      SOKETI_DEFAULT_APP_SECRET: naqla_app_secret
+      SOKETI_DEFAULT_APP_ENABLE_CLIENT_MESSAGES: "true"
+    ports:
+      - "127.0.0.1:6001:6001"
+      - "127.0.0.1:9601:9601"

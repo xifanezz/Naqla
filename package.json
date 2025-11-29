@@ -1,0 +1,29 @@
+{
+  "name": "naqla",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "start": "bun run src/index.ts",
+    "db:migrate": "bun run src/db/migrate.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.0",
+    "@types/pg": "^8.15.6",
+    "bcrypt": "^5.1.0",
+    "better-auth": "^1.4.3",
+    "hono": "^4.6.0",
+    "jose": "^5.0.0",
+    "kysely": "^0.28.8",
+    "meilisearch": "^0.44.0",
+    "nanoid": "^5.0.0",
+    "pg": "^8.16.3",
+    "postgres": "^3.4.0",
+    "pusher": "^5.2.0",
+    "pusher-js": "^8.4.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/bcrypt": "^5.0.0"
+  }
+}
