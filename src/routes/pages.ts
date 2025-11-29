@@ -14,12 +14,40 @@ const pages = new Hono();
 
 // Homepage
 pages.get('/', async (c) => {
-  const categories = await sql`
+  // Get main categories (parent_id IS NULL) with their subcategories
+  const mainCategories = await sql`
+    SELECT c.*,
+      (SELECT COUNT(*) FROM listings l
+       JOIN categories sub ON l.category_id = sub.id
+       WHERE (sub.parent_id = c.id OR sub.id = c.id) AND l.status = 'active') as listing_count
+    FROM categories c
+    WHERE c.parent_id IS NULL
+    ORDER BY c.sort_order ASC
+  `;
+
+  // Get all subcategories grouped by parent
+  const subcategories = await sql`
     SELECT c.*,
       (SELECT COUNT(*) FROM listings l WHERE l.category_id = c.id AND l.status = 'active') as listing_count
     FROM categories c
-    ORDER BY c.sort_order ASC
+    WHERE c.parent_id IS NOT NULL
+    ORDER BY c.parent_id, c.sort_order ASC
   `;
+
+  // Group subcategories by parent_id
+  const subsByParent: Record<number, any[]> = {};
+  for (const sub of subcategories) {
+    if (!subsByParent[sub.parent_id]) {
+      subsByParent[sub.parent_id] = [];
+    }
+    subsByParent[sub.parent_id].push(sub);
+  }
+
+  // Attach subcategories to main categories
+  const categories = mainCategories.map((cat: any) => ({
+    ...cat,
+    subcategories: subsByParent[cat.id] || []
+  }));
 
   const listings = await sql`
     SELECT l.*, c.name_ar as category_name
