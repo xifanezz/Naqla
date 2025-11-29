@@ -2,7 +2,6 @@ import { layout } from './layout';
 
 // Smart icon system - maps category slugs to SVG icons
 const catIcons: Record<string, string> = {
-  // Main categories
   'cars': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17a2 2 0 104 0 2 2 0 00-4 0zM15 17a2 2 0 104 0 2 2 0 00-4 0z"/><path d="M5 17H3v-6l2-5h10l2 5v6h-2m-8 0h4"/></svg>',
   'real-estate': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/></svg>',
   'electronics': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>',
@@ -16,51 +15,66 @@ const catIcons: Record<string, string> = {
   'default': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
 };
 
-// Get icon by slug - checks for partial matches
 function getIcon(slug: string): string {
   if (catIcons[slug]) return catIcons[slug];
-
-  // Check for partial matches in subcategories
   for (const key of Object.keys(catIcons)) {
     if (slug.startsWith(key + '-')) return catIcons[key];
   }
-
   return catIcons.default;
 }
 
 export function homePage(data: { categories: any[]; listings: any[]; user?: any }) {
   const { categories, listings, user } = data;
 
+  // Show first 4 categories with subs, rest in "more"
+  const mainCats = categories.slice(0, 4);
+  const moreCats = categories.slice(4);
+
   return layout(`
     <div class="box">
       <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>الأقسام</h2>
 
-      <div class="categories-list">
-        ${categories.map(cat => `
-          <div class="category-section">
-            <div class="category-header" onclick="toggleCategory(this)">
-              <div class="category-title">
-                ${getIcon(cat.slug)}
-                <span>${cat.name_ar}</span>
-                <span class="count">(${cat.listing_count || 0})</span>
-              </div>
-              <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-            </div>
+      <div class="cats-compact">
+        ${mainCats.map(cat => `
+          <div class="cat-row">
+            <a href="/category/${cat.slug}" class="cat-main">
+              ${getIcon(cat.slug)}
+              <span>${cat.name_ar}</span>
+            </a>
             ${cat.subcategories && cat.subcategories.length > 0 ? `
-              <div class="subcategories">
-                <a href="/category/${cat.slug}" class="subcat-link">جميع ${cat.name_ar}</a>
-                ${cat.subcategories.map((sub: any) => `
-                  <a href="/category/${sub.slug}" class="subcat-link">${sub.name_ar} <span class="meta">(${sub.listing_count || 0})</span></a>
-                `).join('')}
+              <div class="cat-subs">
+                ${cat.subcategories.slice(0, 4).map((sub: any) => `<a href="/category/${sub.slug}">${sub.name_ar}</a>`).join('')}
+                ${cat.subcategories.length > 4 ? `<a href="/category/${cat.slug}" class="more">+${cat.subcategories.length - 4}</a>` : ''}
               </div>
-            ` : `
-              <div class="subcategories">
-                <a href="/category/${cat.slug}" class="subcat-link">تصفح ${cat.name_ar}</a>
-              </div>
-            `}
+            ` : ''}
           </div>
         `).join('')}
       </div>
+
+      ${moreCats.length > 0 ? `
+        <div id="more-cats" style="display:none;">
+          <div class="cats-compact">
+            ${moreCats.map(cat => `
+              <div class="cat-row">
+                <a href="/category/${cat.slug}" class="cat-main">
+                  ${getIcon(cat.slug)}
+                  <span>${cat.name_ar}</span>
+                </a>
+                ${cat.subcategories && cat.subcategories.length > 0 ? `
+                  <div class="cat-subs">
+                    ${cat.subcategories.slice(0, 4).map((sub: any) => `<a href="/category/${sub.slug}">${sub.name_ar}</a>`).join('')}
+                    ${cat.subcategories.length > 4 ? `<a href="/category/${cat.slug}" class="more">+${cat.subcategories.length - 4}</a>` : ''}
+                  </div>
+                ` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <button onclick="toggleMore()" id="more-btn" class="more-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          المزيد (${moreCats.length})
+        </button>
+      ` : ''}
     </div>
 
     <div class="box">
@@ -76,91 +90,95 @@ export function homePage(data: { categories: any[]; listings: any[]; user?: any 
     </div>
 
     <style>
-      .categories-list {
+      .cats-compact {
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: 6px;
       }
-      .category-section {
-        border: 1px solid #e8e4de;
-        border-radius: 8px;
-        overflow: hidden;
-      }
-      .category-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 12px 16px;
-        background: #faf8f5;
-        cursor: pointer;
-        transition: background 0.2s;
-      }
-      .category-header:hover {
-        background: #f5f3f0;
-      }
-      .category-title {
+      .cat-row {
         display: flex;
         align-items: center;
         gap: 10px;
-        font-weight: 600;
+        padding: 8px 0;
+        border-bottom: 1px solid #f0ebe5;
+      }
+      .cat-row:last-child { border-bottom: none; }
+      .cat-main {
+        display: flex;
+        align-items: center;
+        gap: 6px;
         color: #333;
+        font-weight: 600;
+        font-size: 14px;
+        text-decoration: none;
+        white-space: nowrap;
+        min-width: 100px;
       }
-      .category-title svg {
-        width: 22px;
-        height: 22px;
+      .cat-main:hover { color: #5f4a82; }
+      .cat-main svg {
+        width: 18px;
+        height: 18px;
         color: #5f4a82;
+        flex-shrink: 0;
       }
-      .category-title .count {
-        font-weight: 400;
-        color: #888;
-        font-size: 13px;
-      }
-      .chevron {
-        width: 20px;
-        height: 20px;
-        color: #888;
-        transition: transform 0.2s;
-      }
-      .category-section.open .chevron {
-        transform: rotate(180deg);
-      }
-      .subcategories {
-        display: none;
-        padding: 8px 16px 12px;
-        background: #fff;
-        border-top: 1px solid #eee8e0;
-      }
-      .category-section.open .subcategories {
+      .cat-subs {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 6px;
+        flex: 1;
       }
-      .subcat-link {
-        display: inline-block;
-        padding: 6px 12px;
+      .cat-subs a {
+        padding: 3px 8px;
         background: #f5f3f0;
+        border-radius: 4px;
+        color: #666;
+        text-decoration: none;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      .cat-subs a:hover {
+        background: #ebe7e2;
+        color: #5f4a82;
+      }
+      .cat-subs a.more {
+        background: #5f4a82;
+        color: #fff;
+      }
+      .more-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        width: 100%;
+        margin-top: 8px;
+        padding: 8px;
+        background: none;
+        border: 1px dashed #ddd;
         border-radius: 6px;
         color: #5f4a82;
-        text-decoration: none;
         font-size: 13px;
-        transition: background 0.2s;
+        cursor: pointer;
       }
-      .subcat-link:hover {
-        background: #ebe7e2;
-      }
-      .subcat-link .meta {
-        color: #999;
-        font-size: 11px;
+      .more-btn:hover { background: #faf8f5; }
+      .more-btn svg { width: 16px; height: 16px; transition: transform 0.2s; }
+      .more-btn.open svg { transform: rotate(180deg); }
+      @media (max-width: 500px) {
+        .cat-row { flex-direction: column; align-items: flex-start; gap: 6px; }
+        .cat-subs { margin-right: 24px; }
       }
     </style>
 
     <script>
-      function toggleCategory(header) {
-        const section = header.parentElement;
-        section.classList.toggle('open');
+      function toggleMore() {
+        const el = document.getElementById('more-cats');
+        const btn = document.getElementById('more-btn');
+        const isHidden = el.style.display === 'none';
+        el.style.display = isHidden ? 'block' : 'none';
+        btn.classList.toggle('open', isHidden);
+        btn.innerHTML = isHidden
+          ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>إخفاء'
+          : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>المزيد (${moreCats.length})';
       }
-      // Open first category by default
-      document.querySelector('.category-section')?.classList.add('open');
     </script>
   `, { user });
 }
