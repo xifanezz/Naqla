@@ -4,6 +4,9 @@ export function chatListPage(conversations: any[], user: any) {
   return layout(`
     <div class="box">
       <h2>
+        <a href="/profile" style="color:#5f4a82;margin-left:8px;" title="رجوع">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </a>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
         المحادثات
       </h2>
@@ -32,7 +35,7 @@ export function chatListPage(conversations: any[], user: any) {
         <div style="text-align:center;padding:40px 20px;">
           <svg viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2" style="width:64px;height:64px;margin-bottom:16px;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
           <p style="color:#888;margin-bottom:12px;">لا توجد محادثات بعد</p>
-          <a href="/" class="btn">تصفح الإعلانات</a>
+          <a href="/" class="btn" style="color:#fff;">تصفح الإعلانات</a>
         </div>
       `}
     </div>
@@ -74,35 +77,117 @@ export function chatRoomPage(conversation: any, messages: any[], user: any) {
       </div>
 
       <!-- Input -->
-      <form id="msg-form" style="display:flex;gap:8px;padding-top:12px;border-top:1px solid #eee8e0;">
+      <form id="msg-form" style="display:flex;gap:8px;padding-top:12px;border-top:1px solid #eee8e0;align-items:center;">
+        <label for="img-input" style="cursor:pointer;padding:8px;border-radius:8px;background:#f5f3f0;display:flex;align-items:center;justify-content:center;" title="إرفاق صورة">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#5f4a82" stroke-width="2" style="width:20px;height:20px;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        </label>
+        <input type="file" id="img-input" accept="image/*" style="display:none;">
         <input type="text" id="msg-input" placeholder="اكتب رسالتك..." style="flex:1;" autocomplete="off">
         <button type="submit" class="btn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
           إرسال
         </button>
       </form>
+      <div id="img-preview" style="display:none;margin-top:8px;position:relative;">
+        <img id="preview-img" style="max-height:100px;border-radius:8px;">
+        <button type="button" id="cancel-img" style="position:absolute;top:-8px;right:-8px;background:#c00;color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:16px;">×</button>
+      </div>
     </div>
 
     <script>
       const uid = ${user.id}, cid = ${conversation.id};
       const msgs = document.getElementById('msgs');
       const statusEl = document.getElementById('status');
+      const imgInput = document.getElementById('img-input');
+      const imgPreview = document.getElementById('img-preview');
+      const previewImg = document.getElementById('preview-img');
+      const cancelImg = document.getElementById('cancel-img');
+      let pendingImage = null;
+
       msgs.scrollTop = msgs.scrollHeight;
+
+      // Image compression
+      async function compressImage(file, maxSize = 800, quality = 0.8) {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              let w = img.width, h = img.height;
+              if (w > h) {
+                if (w > maxSize) { h = h * maxSize / w; w = maxSize; }
+              } else {
+                if (h > maxSize) { w = w * maxSize / h; h = maxSize; }
+              }
+              canvas.width = w;
+              canvas.height = h;
+              canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+              canvas.toBlob((blob) => {
+                resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+              }, 'image/jpeg', quality);
+            };
+            img.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      // Image selection
+      imgInput.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        pendingImage = await compressImage(file);
+        previewImg.src = URL.createObjectURL(pendingImage);
+        imgPreview.style.display = 'block';
+      };
+
+      cancelImg.onclick = () => {
+        pendingImage = null;
+        imgPreview.style.display = 'none';
+        imgInput.value = '';
+      };
 
       // Send message (uses cookie auth)
       document.getElementById('msg-form').onsubmit = async e => {
         e.preventDefault();
         const inp = document.getElementById('msg-input'), txt = inp.value.trim();
-        if (!txt) return;
+        if (!txt && !pendingImage) return;
+
         inp.value = '';
-        addMsg({ content: txt, sender_id: uid, created_at: new Date().toISOString() });
+        const imageToSend = pendingImage;
+        pendingImage = null;
+        imgPreview.style.display = 'none';
+        imgInput.value = '';
+
+        // Show optimistic message
+        if (txt) {
+          addMsg({ content: txt, sender_id: uid, created_at: new Date().toISOString() });
+        }
+        if (imageToSend) {
+          addMsg({ content: '[صورة]', image_url: URL.createObjectURL(imageToSend), sender_id: uid, created_at: new Date().toISOString() });
+        }
+
         try {
-          await fetch('/api/chat/conversations/${conversation.id}/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ content: txt })
-          });
+          if (imageToSend) {
+            // Upload image first
+            const formData = new FormData();
+            formData.append('image', imageToSend);
+            if (txt) formData.append('content', txt);
+
+            await fetch('/api/chat/conversations/${conversation.id}/messages', {
+              method: 'POST',
+              credentials: 'include',
+              body: formData
+            });
+          } else {
+            await fetch('/api/chat/conversations/${conversation.id}/messages', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ content: txt })
+            });
+          }
         } catch (err) {
           console.error('Send error:', err);
         }
@@ -113,9 +198,20 @@ export function chatRoomPage(conversation: any, messages: any[], user: any) {
         const time = new Date(m.created_at).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
         const div = document.createElement('div');
         div.style.cssText = 'display:flex;margin-bottom:12px;' + (own ? 'flex-direction:row-reverse;' : '');
+
+        let content = '';
+        if (m.image_url) {
+          content = '<img src="' + m.image_url + '" style="max-width:200px;max-height:200px;border-radius:8px;cursor:pointer;" onclick="window.open(this.src)">';
+          if (m.content && m.content !== '[صورة]') {
+            content += '<div style="margin-top:6px;">' + escapeHtml(m.content) + '</div>';
+          }
+        } else {
+          content = '<div style="word-wrap:break-word;">' + escapeHtml(m.content) + '</div>';
+        }
+
         div.innerHTML = \`
           <div style="max-width:70%;padding:10px 14px;border-radius:\${own ? '16px 16px 4px 16px' : '16px 16px 16px 4px'};background:\${own ? '#5f4a82' : '#fff'};color:\${own ? '#fff' : '#333'};box-shadow:0 1px 2px rgba(0,0,0,0.1);">
-            <div style="word-wrap:break-word;">\${escapeHtml(m.content)}</div>
+            \${content}
             <div style="font-size:10px;opacity:0.7;text-align:\${own ? 'left' : 'right'};margin-top:4px;">\${time}</div>
           </div>
         \`;
@@ -124,6 +220,7 @@ export function chatRoomPage(conversation: any, messages: any[], user: any) {
       }
 
       function escapeHtml(text) {
+        if (!text) return '';
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;

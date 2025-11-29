@@ -169,7 +169,8 @@ pages.get('/register', (c) => {
 // Post listing page
 pages.get('/post', async (c) => {
   const categories = await sql`SELECT * FROM categories ORDER BY sort_order`;
-  const user = c.get('userId') ? { id: c.get('userId') } : null;
+  const session = await auth.api.getSession({ headers: c.req.raw.headers });
+  const user = session ? { id: session.user.id, name: session.user.name } : null;
   return c.html(postListingPage(categories, user));
 });
 

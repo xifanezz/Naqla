@@ -30,6 +30,10 @@ export function profilePage(user: any, stats: any, listings: any[]) {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
             الإعدادات
           </a>
+          <button onclick="logout()" class="btn" style="background:#fee2e2;color:#c00;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            تسجيل خروج
+          </button>
         </div>
       </div>
     </div>
@@ -98,6 +102,19 @@ export function profilePage(user: any, stats: any, listings: any[]) {
         </div>
       </a>
     </div>
+    <script>
+      async function logout() {
+        if (!confirm('هل تريد تسجيل الخروج؟')) return;
+        try {
+          await fetch('/api/auth/sign-out', { method: 'POST', credentials: 'include' });
+          localStorage.removeItem('user');
+          window.location.href = '/';
+        } catch (e) {
+          console.error(e);
+          window.location.href = '/';
+        }
+      }
+    </script>
   `, { title: 'حسابي | نقلة', user });
 }
 
@@ -108,6 +125,9 @@ export function settingsPage(user: any, hasPassword: boolean = true) {
   return layout(`
     <div class="box" style="max-width:500px;margin:0 auto;">
       <h2>
+        <a href="/profile" style="color:#5f4a82;margin-left:8px;" title="رجوع">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </a>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
         الإعدادات
       </h2>
@@ -141,8 +161,8 @@ export function settingsPage(user: any, hasPassword: boolean = true) {
           <input type="tel" name="phone" value="${user.phone || ''}" placeholder="05xxxxxxxx" dir="ltr">
         </p>
 
-        <p style="margin-bottom:12px;">
-          <label>المدينة:</label>
+        <div style="margin-bottom:20px;">
+          <label style="display:block;margin-bottom:8px;">المدينة:</label>
           <div style="display:flex;gap:8px;">
             <div style="flex:1;position:relative;">
               <input type="text" id="city-search" name="city" value="${user.city || ''}" placeholder="ابحث عن مدينتك..." autocomplete="off">
@@ -153,18 +173,18 @@ export function settingsPage(user: any, hasPassword: boolean = true) {
               <span id="detect-text">اكتشاف</span>
             </button>
           </div>
-          <span class="meta" id="city-hint" style="display:none;color:#2e7d32;margin-top:4px;"></span>
-        </p>
+          <span class="meta" id="city-hint" style="display:none;color:#2e7d32;margin-top:8px;"></span>
+        </div>
 
         <div id="err" class="err" style="display:none;"></div>
         <div id="success" style="display:none;background:#e8f5e9;border:1px solid #c8e6c9;color:#2e7d32;padding:10px;border-radius:4px;margin-bottom:12px;"></div>
 
-        <p>
+        <div style="margin-top:16px;">
           <button type="submit" class="btn" style="width:100%;justify-content:center;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
             حفظ التغييرات
           </button>
-        </p>
+        </div>
       </form>
 
       ${hasPassword ? `
@@ -240,7 +260,51 @@ export function settingsPage(user: any, hasPassword: boolean = true) {
         }
       });
 
-      // City detection button
+      // City coordinates for distance calculation
+      const saudiCitiesCoords = {
+        'الرياض': { lat: 24.7136, lng: 46.6753 },
+        'جدة': { lat: 21.4858, lng: 39.1925 },
+        'مكة المكرمة': { lat: 21.4225, lng: 39.8262 },
+        'المدينة المنورة': { lat: 24.5247, lng: 39.5692 },
+        'الدمام': { lat: 26.4207, lng: 50.0888 },
+        'الخبر': { lat: 26.2172, lng: 50.1971 },
+        'الظهران': { lat: 26.2361, lng: 50.0393 },
+        'الأحساء': { lat: 25.3648, lng: 49.5677 },
+        'الجبيل': { lat: 27.0046, lng: 49.6225 },
+        'القطيف': { lat: 26.5196, lng: 49.9982 },
+        'حفر الباطن': { lat: 28.4328, lng: 45.9708 },
+        'الطائف': { lat: 21.2854, lng: 40.4150 },
+        'ينبع': { lat: 24.0875, lng: 38.0618 },
+        'تبوك': { lat: 28.3838, lng: 36.5550 },
+        'بريدة': { lat: 26.3599, lng: 43.9750 },
+        'عنيزة': { lat: 26.0842, lng: 43.9932 },
+        'حائل': { lat: 27.5114, lng: 41.7208 },
+        'نجران': { lat: 17.4933, lng: 44.1277 },
+        'جازان': { lat: 16.8892, lng: 42.5611 },
+        'أبها': { lat: 18.2164, lng: 42.5053 },
+        'خميس مشيط': { lat: 18.3061, lng: 42.7350 },
+        'الباحة': { lat: 20.0129, lng: 41.4677 },
+        'عرعر': { lat: 30.9753, lng: 41.0381 },
+        'سكاكا': { lat: 29.9697, lng: 40.2064 },
+        'القريات': { lat: 31.3317, lng: 37.3439 },
+        'العلا': { lat: 26.6167, lng: 37.9167 },
+        'الخرج': { lat: 24.1556, lng: 47.3126 },
+      };
+
+      function findNearestCity(lat, lng) {
+        let nearest = null;
+        let minDist = Infinity;
+        for (const [city, coords] of Object.entries(saudiCitiesCoords)) {
+          const dist = Math.sqrt(Math.pow(lat - coords.lat, 2) + Math.pow(lng - coords.lng, 2));
+          if (dist < minDist) {
+            minDist = dist;
+            nearest = city;
+          }
+        }
+        return minDist < 1.8 ? nearest : null;
+      }
+
+      // City detection button - IP-based with multiple fallback APIs
       document.getElementById('detect-city').onclick = async function() {
         const btn = this;
         const textSpan = document.getElementById('detect-text');
@@ -248,115 +312,70 @@ export function settingsPage(user: any, hasPassword: boolean = true) {
 
         btn.disabled = true;
         textSpan.textContent = 'جاري...';
+        cityHint.style.color = '#2e7d32';
+
+        // List of IP geolocation APIs to try (free, no API key required)
+        const geoApis = [
+          { url: 'https://ip-api.com/json/?fields=lat,lon,city,country', parse: d => ({ lat: d.lat, lng: d.lon, country: d.country }) },
+          { url: 'https://ipwho.is/', parse: d => ({ lat: d.latitude, lng: d.longitude, country: d.country }) },
+          { url: 'https://freeipapi.com/api/json', parse: d => ({ lat: d.latitude, lng: d.longitude, country: d.countryName }) },
+        ];
 
         try {
-          // Try IP-based geolocation first (faster)
-          const ipResponse = await fetch('https://ipapi.co/json/');
-          if (ipResponse.ok) {
-            const ipData = await ipResponse.json();
-            if (ipData.city) {
-              // Map English city names to Arabic
-              const cityMap = {
-                'Riyadh': 'الرياض',
-                'Jeddah': 'جدة',
-                'Mecca': 'مكة المكرمة',
-                'Medina': 'المدينة المنورة',
-                'Dammam': 'الدمام',
-                'Khobar': 'الخبر',
-                'Dhahran': 'الظهران',
-                'Taif': 'الطائف',
-                'Tabuk': 'تبوك',
-                'Buraidah': 'بريدة',
-                'Hail': 'حائل',
-                'Najran': 'نجران',
-                'Jizan': 'جازان',
-                'Jazan': 'جازان',
-                'Abha': 'أبها',
-                'Khamis Mushait': 'خميس مشيط',
-                'Al Bahah': 'الباحة',
-                'Arar': 'عرعر',
-                'Sakaka': 'سكاكا',
-                'Yanbu': 'ينبع',
-                'Jubail': 'الجبيل',
-                'Al-Ahsa': 'الأحساء',
-                'Hofuf': 'الأحساء',
-                'Qatif': 'القطيف',
-                'Hafar Al-Batin': 'حفر الباطن',
-              };
+          let detectedCity = null;
 
-              const arabicCity = cityMap[ipData.city] || cities.find(c =>
-                c.toLowerCase().includes(ipData.city.toLowerCase()) ||
-                ipData.city.toLowerCase().includes(c.toLowerCase())
-              );
+          for (const api of geoApis) {
+            try {
+              const response = await fetch(api.url);
+              const data = await response.json();
+              const geo = api.parse(data);
 
-              if (arabicCity && cities.includes(arabicCity)) {
-                cityInput.value = arabicCity;
-                cityHint.textContent = 'تم اكتشاف موقعك: ' + arabicCity;
-                cityHint.style.display = 'block';
-                setTimeout(() => cityHint.style.display = 'none', 3000);
-                btn.disabled = false;
-                textSpan.textContent = originalText;
-                return;
+              if (geo.lat && geo.lng) {
+                // Check if user is in Saudi Arabia region (roughly)
+                const inSaudi = geo.lat >= 16 && geo.lat <= 33 && geo.lng >= 34 && geo.lng <= 56;
+
+                if (inSaudi) {
+                  detectedCity = findNearestCity(geo.lat, geo.lng);
+                  if (detectedCity) break;
+                } else if (geo.country && (geo.country.includes('Saudi') || geo.country === 'SA')) {
+                  detectedCity = 'الرياض';
+                  break;
+                }
               }
+            } catch (e) {
+              continue;
             }
           }
 
-          // Fallback to browser geolocation
-          if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-              async (position) => {
-                const { latitude, longitude } = position.coords;
-
-                // Use reverse geocoding
-                try {
-                  const geoRes = await fetch(
-                    'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + latitude + '&lon=' + longitude + '&accept-language=ar'
-                  );
-                  const geoData = await geoRes.json();
-                  const cityName = geoData.address?.city || geoData.address?.town || geoData.address?.village;
-
-                  if (cityName) {
-                    const matchedCity = cities.find(c =>
-                      c.includes(cityName) || cityName.includes(c)
-                    );
-                    if (matchedCity) {
-                      cityInput.value = matchedCity;
-                      cityHint.textContent = 'تم اكتشاف موقعك: ' + matchedCity;
-                      cityHint.style.display = 'block';
-                      setTimeout(() => cityHint.style.display = 'none', 3000);
-                    } else {
-                      cityHint.textContent = 'لم نتمكن من تحديد مدينتك بدقة';
-                      cityHint.style.color = '#e65100';
-                      cityHint.style.display = 'block';
-                    }
-                  }
-                } catch (e) {
-                  console.error(e);
-                }
-
-                btn.disabled = false;
-                textSpan.textContent = originalText;
-              },
-              (error) => {
-                cityHint.textContent = 'فشل تحديد الموقع. تأكد من السماح بالوصول للموقع.';
-                cityHint.style.color = '#c00';
-                cityHint.style.display = 'block';
-                btn.disabled = false;
-                textSpan.textContent = originalText;
+          // Fallback: timezone-based detection
+          if (!detectedCity) {
+            try {
+              const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+              if (timezone && (timezone.includes('Riyadh') || timezone.includes('Arabia'))) {
+                detectedCity = 'الرياض';
               }
-            );
-          } else {
-            cityHint.textContent = 'المتصفح لا يدعم تحديد الموقع';
-            cityHint.style.color = '#c00';
+            } catch (e) {}
+          }
+
+          if (detectedCity && cities.includes(detectedCity)) {
+            cityInput.value = detectedCity;
+            cityHint.textContent = 'تم اكتشاف موقعك: ' + detectedCity;
             cityHint.style.display = 'block';
-            btn.disabled = false;
-            textSpan.textContent = originalText;
+            setTimeout(() => cityHint.style.display = 'none', 4000);
+          } else {
+            cityHint.textContent = 'لم نتمكن من تحديد مدينتك. اختر من القائمة.';
+            cityHint.style.color = '#e65100';
+            cityHint.style.display = 'block';
           }
         } catch (e) {
           console.error(e);
-          btn.disabled = false;
-          textSpan.textContent = originalText;
+          cityHint.textContent = 'فشل تحديد الموقع';
+          cityHint.style.color = '#c00';
+          cityHint.style.display = 'block';
         }
+
+        btn.disabled = false;
+        textSpan.textContent = originalText;
       };
 
       // Avatar upload with compression
@@ -519,6 +538,9 @@ export function notificationsPage(notifications: any[], user: any) {
   return layout(`
     <div class="box">
       <h2>
+        <a href="/profile" style="color:#5f4a82;margin-left:8px;" title="رجوع">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </a>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
         الإشعارات
         ${notifications.some(n => !n.is_read) ? `<button onclick="markAllRead()" style="margin-right:auto;font-size:12px;font-weight:normal;background:none;border:none;color:#5f4a82;cursor:pointer;">تحديد الكل كمقروء</button>` : ''}
@@ -598,6 +620,9 @@ export function myListingsPage(listings: any[], user: any) {
   return layout(`
     <div class="box">
       <h2>
+        <a href="/profile" style="color:#5f4a82;margin-left:8px;" title="رجوع">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </a>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
         إعلاناتي
         <a href="/post" class="btn" style="margin-right:auto;font-size:12px;">
