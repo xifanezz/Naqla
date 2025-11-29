@@ -5,7 +5,7 @@ export function chatListPage(conversations: any[], user: any) {
     <div class="box">
       <h2>
         <a href="/profile" style="color:#5f4a82;margin-left:8px;" title="رجوع">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
         المحادثات
