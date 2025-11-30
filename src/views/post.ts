@@ -1,5 +1,6 @@
 import { layout } from './layout';
 import { saudiCities } from '../data/cities';
+import { config } from '../config';
 
 // Categories data (same as home.ts)
 const mainCategories = [
@@ -359,6 +360,41 @@ export function postListingPage(categories: any[], user?: any) {
         font-size: 12px;
       }
 
+      /* Location picker */
+      .location-picker {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid #eee;
+      }
+      .location-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+        background: #f5f0eb;
+        border: 1px solid #ddd5cc;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        color: #5f4a82;
+        width: 100%;
+        justify-content: center;
+        transition: all 0.15s;
+      }
+      .location-btn:hover {
+        background: #ebe5de;
+        border-color: #5f4a82;
+      }
+      .location-btn.loading {
+        opacity: 0.7;
+        cursor: wait;
+      }
+      .location-btn.success {
+        background: #e8f5e9;
+        border-color: #4caf50;
+        color: #2e7d32;
+      }
+
       /* Image upload */
       .img-upload {
         border: 2px dashed #ddd;
@@ -671,8 +707,28 @@ export function postListingPage(categories: any[], user?: any) {
             </p>
             <p style="flex:1;">
               <label>الحي:</label>
-              <input type="text" id="neighborhood" placeholder="اختياري">
+              <div style="position:relative;">
+                <input type="text" id="neighborhood" placeholder="اختياري">
+              </div>
             </p>
+          </div>
+
+          <!-- Location picker -->
+          <div class="location-picker">
+            <button type="button" class="location-btn" id="get-location-btn" onclick="getMyLocation()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;">
+                <circle cx="12" cy="12" r="10"/>
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 2v2M12 20v2M2 12h2M20 12h2"/>
+              </svg>
+              <span>📍 حدد موقعي على الخريطة</span>
+            </button>
+            <div id="map-container" style="display:none;">
+              <div id="map" style="height:250px;border-radius:8px;margin-top:12px;"></div>
+              <p style="font-size:12px;color:#888;margin-top:8px;">اضغط على الخريطة لتحديد الموقع بدقة</p>
+            </div>
+            <input type="hidden" id="latitude">
+            <input type="hidden" id="longitude">
           </div>
 
           <h4 style="margin:20px 0 12px;">معلومات التواصل</h4>
@@ -811,6 +867,8 @@ export function postListingPage(categories: any[], user?: any) {
         priceType: 'fixed',
         city: '${user?.city || ''}',
         neighborhood: '',
+        latitude: null,
+        longitude: null,
         contactPhone: '${user?.phone || ''}',
         contactMethod: 'both',
         images: []
@@ -1015,6 +1073,151 @@ export function postListingPage(categories: any[], user?: any) {
           }, 100);
           document.getElementById('ai-suggest').classList.remove('show');
         }
+      }
+
+      // Location / Map functions
+      let map = null;
+      let marker = null;
+
+      function getMyLocation() {
+        const btn = document.getElementById('get-location-btn');
+
+        if (!navigator.geolocation) {
+          alert('المتصفح لا يدعم تحديد الموقع');
+          return;
+        }
+
+        btn.classList.add('loading');
+        btn.querySelector('span').textContent = 'جاري تحديد الموقع...';
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lng;
+            state.latitude = lat;
+            state.longitude = lng;
+
+            // Show map
+            showMap(lat, lng);
+
+            // Reverse geocode to get address
+            reverseGeocode(lat, lng);
+
+            btn.classList.remove('loading');
+            btn.classList.add('success');
+            btn.querySelector('span').textContent = '✓ تم تحديد الموقع';
+          },
+          (error) => {
+            btn.classList.remove('loading');
+            let msg = 'فشل تحديد الموقع';
+            if (error.code === 1) msg = 'تم رفض صلاحية الموقع';
+            else if (error.code === 2) msg = 'الموقع غير متاح';
+            else if (error.code === 3) msg = 'انتهت مهلة الطلب';
+            btn.querySelector('span').textContent = msg;
+            setTimeout(() => {
+              btn.querySelector('span').textContent = '📍 حدد موقعي على الخريطة';
+            }, 3000);
+          },
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
+      }
+
+      function showMap(lat, lng) {
+        const container = document.getElementById('map-container');
+        container.style.display = 'block';
+
+        // Initialize map if not exists
+        if (!map) {
+          map = new google.maps.Map(document.getElementById('map'), {
+            center: { lat, lng },
+            zoom: 15,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: false
+          });
+
+          // Add click listener to map
+          map.addListener('click', (e) => {
+            const newLat = e.latLng.lat();
+            const newLng = e.latLng.lng();
+            updateMarker(newLat, newLng);
+            reverseGeocode(newLat, newLng);
+          });
+        } else {
+          map.setCenter({ lat, lng });
+        }
+
+        updateMarker(lat, lng);
+      }
+
+      function updateMarker(lat, lng) {
+        document.getElementById('latitude').value = lat;
+        document.getElementById('longitude').value = lng;
+        state.latitude = lat;
+        state.longitude = lng;
+
+        if (marker) {
+          marker.setPosition({ lat, lng });
+        } else {
+          marker = new google.maps.Marker({
+            position: { lat, lng },
+            map: map,
+            draggable: true,
+            animation: google.maps.Animation.DROP
+          });
+
+          marker.addListener('dragend', () => {
+            const pos = marker.getPosition();
+            reverseGeocode(pos.lat(), pos.lng());
+            document.getElementById('latitude').value = pos.lat();
+            document.getElementById('longitude').value = pos.lng();
+            state.latitude = pos.lat();
+            state.longitude = pos.lng();
+          });
+        }
+        saveDraft();
+      }
+
+      function reverseGeocode(lat, lng) {
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+          if (status === 'OK' && results[0]) {
+            // Find neighborhood from address components
+            let neighborhood = '';
+            let city = '';
+
+            for (const component of results[0].address_components) {
+              if (component.types.includes('neighborhood') || component.types.includes('sublocality_level_1') || component.types.includes('sublocality')) {
+                neighborhood = component.long_name;
+              }
+              if (component.types.includes('locality') || component.types.includes('administrative_area_level_2')) {
+                city = component.long_name;
+              }
+            }
+
+            if (neighborhood) {
+              document.getElementById('neighborhood').value = neighborhood;
+              state.neighborhood = neighborhood;
+            }
+
+            // Try to match city with our city list
+            if (city) {
+              const citySelect = document.getElementById('city');
+              for (const option of citySelect.options) {
+                if (option.value && (city.includes(option.value) || option.value.includes(city))) {
+                  citySelect.value = option.value;
+                  state.city = option.value;
+                  break;
+                }
+              }
+            }
+
+            saveDraft();
+          }
+        });
       }
 
       function goToStep(step) {
@@ -1308,6 +1511,9 @@ export function postListingPage(categories: any[], user?: any) {
         }
       }
     </script>
+
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=${config.googleMapsKey}&language=ar&region=SA"></script>
   `, { title: 'أضف إعلان | نقلة', user });
 }
 
