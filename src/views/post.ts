@@ -648,8 +648,8 @@ export function postListingPage(categories: any[], user?: any) {
 
           <div style="display:flex;gap:12px;">
             <p style="flex:1;">
-              <label>السعر (ر.س):</label>
-              <input type="number" id="price" min="0" step="1" dir="ltr" placeholder="0">
+              <label>السعر (ر.س): <small style="color:#888;font-weight:normal;">اختياري</small></label>
+              <input type="text" id="price" inputmode="numeric" placeholder="مثال: ١٥٠٠٠ أو 15000" style="text-align:right;">
             </p>
             <p style="flex:1;">
               <label>نوع السعر:</label>
@@ -835,6 +835,20 @@ export function postListingPage(categories: any[], user?: any) {
       // Debounce for draft saving
       let saveTimeout = null;
 
+      // Convert Arabic/Persian numbers to English
+      function convertArabicNumbers(str) {
+        if (!str) return '';
+        const arabicNums = '٠١٢٣٤٥٦٧٨٩';
+        const persianNums = '۰۱۲۳۴۵۶۷۸۹';
+        let result = str.toString();
+        for (let i = 0; i < 10; i++) {
+          result = result.replace(new RegExp(arabicNums[i], 'g'), i);
+          result = result.replace(new RegExp(persianNums[i], 'g'), i);
+        }
+        // Remove any non-numeric characters except decimal point
+        return result.replace(/[^\d.]/g, '');
+      }
+
       // Initialize
       document.addEventListener('DOMContentLoaded', () => {
         checkDraft();
@@ -862,7 +876,8 @@ export function postListingPage(categories: any[], user?: any) {
           saveDraft();
         });
         document.getElementById('price').addEventListener('input', (e) => {
-          state.price = e.target.value ? parseFloat(e.target.value) : null;
+          const value = convertArabicNumbers(e.target.value);
+          state.price = value ? parseFloat(value) : null;
           saveDraft();
         });
         document.getElementById('price_type').addEventListener('change', (e) => {
