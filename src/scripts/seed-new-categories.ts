@@ -20,7 +20,6 @@ const subcategoriesMap: Record<string, { slug: string; name_ar: string; name_en:
     { slug: 'events', name_ar: 'فعاليات', name_en: 'Events' },
     { slug: 'general-community', name_ar: 'عام', name_en: 'General' },
     { slug: 'groups', name_ar: 'مجموعات', name_en: 'Groups' },
-    { slug: 'local-news', name_ar: 'أخبار محلية', name_en: 'Local News' },
     { slug: 'lost-found', name_ar: 'مفقودات', name_en: 'Lost & Found' },
     { slug: 'musicians', name_ar: 'موسيقيون', name_en: 'Musicians' },
     { slug: 'pets', name_ar: 'حيوانات أليفة', name_en: 'Pets' },
