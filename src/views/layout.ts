@@ -23,9 +23,9 @@ export function layout(content: string, options: { title?: string; user?: any } 
     /* Disable text selection on interactive elements */
     button, .btn, .cat-item, .nav a, .contact-opt, .subcat-item { user-select: none; -webkit-user-select: none; }
 
-    a { color: #00c; text-decoration: none; }
-    a:visited { color: #551a8b; }
-    a:hover { text-decoration: underline; }
+    a { color: #5f4a82; text-decoration: none; }
+    a:visited { color: #4a3868; }
+    a:hover { text-decoration: underline; color: #7a5fa8; }
 
     .header { background: #5f4a82; padding: 10px 0; }
     .header .wrap { display: flex; align-items: center; justify-content: space-between; }
@@ -58,12 +58,12 @@ export function layout(content: string, options: { title?: string; user?: any } 
     .cat-item { display: flex; align-items: center; gap: 6px; padding: 5px 0; text-decoration: none; }
     .cat-item:hover { text-decoration: underline; }
     .cat-item svg { width: 16px; height: 16px; color: #5f4a82; flex-shrink: 0; }
-    .cat-item span { color: #00c; }
+    .cat-item span { color: #5f4a82; }
     .cat-item .count { color: #888; font-size: 12px; margin-right: auto; }
 
     .listing { padding: 10px 0; border-bottom: 1px solid #f0ebe5; }
     .listing:last-child { border: none; }
-    .listing-title { color: #00c; }
+    .listing-title { color: #5f4a82; }
     .listing-title:hover { text-decoration: underline; }
     .listing-meta { font-size: 12px; color: #888; margin-top: 3px; display: flex; align-items: center; gap: 6px; }
     .listing-meta svg { width: 14px; height: 14px; }

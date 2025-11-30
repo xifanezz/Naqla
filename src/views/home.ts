@@ -290,14 +290,14 @@ export function homePage(data: { categories: any[]; listings: any[]; user?: any 
       .cl-sub-cat {
         display: inline-block;
         padding: 6px 0;
-        color: #00c;
+        color: #5f4a82;
         text-decoration: none;
         font-size: 14px;
         width: calc(33.33% - 12px);
       }
 
       .cl-sub-cat:visited {
-        color: #551a8b;
+        color: #4a3868;
       }
 
       .cl-sub-cat:hover {
@@ -351,7 +351,7 @@ export function homePage(data: { categories: any[]; listings: any[]; user?: any 
 
       .cl-title {
         flex: 1;
-        color: #00c;
+        color: #5f4a82;
         text-decoration: none;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -359,7 +359,7 @@ export function homePage(data: { categories: any[]; listings: any[]; user?: any 
       }
 
       .cl-title:visited {
-        color: #551a8b;
+        color: #4a3868;
       }
 
       .cl-title:hover {
