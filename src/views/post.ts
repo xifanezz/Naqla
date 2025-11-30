@@ -243,6 +243,9 @@ export function postListingPage(categories: any[], user?: any) {
         stroke: #fff !important;
         fill: none;
       }
+      .cat-item.selected span {
+        color: #fff !important;
+      }
       .cat-item svg {
         width: 28px;
         height: 28px;
@@ -253,6 +256,7 @@ export function postListingPage(categories: any[], user?: any) {
         display: block;
         font-size: 13px;
         font-weight: 500;
+        color: #333;
       }
 
       /* Subcategory list */
