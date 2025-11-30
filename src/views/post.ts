@@ -147,6 +147,13 @@ export function postListingPage(categories: any[], user?: any) {
   const citiesJson = JSON.stringify(saudiCities);
   const mainCatsJson = JSON.stringify(mainCategories);
 
+  // Create slug to database ID mapping from real categories
+  const categoryIdMap: Record<string, number> = {};
+  for (const cat of categories) {
+    categoryIdMap[cat.slug] = cat.id;
+  }
+  const categoryIdMapJson = JSON.stringify(categoryIdMap);
+
   return layout(`
     <style>
       .post-container {
@@ -811,6 +818,7 @@ export function postListingPage(categories: any[], user?: any) {
 
       const subcategories = ${subcatsJson};
       const mainCategories = ${mainCatsJson};
+      const categoryIdMap = ${categoryIdMapJson}; // slug -> database ID
 
       // Keywords for auto-detection
       const keywordMap = {
@@ -942,7 +950,8 @@ export function postListingPage(categories: any[], user?: any) {
 
       function selectSubcategory(subSlug, subId) {
         state.subcategory = subSlug;
-        state.subcategoryId = subId;
+        // Use the real database ID from categoryIdMap
+        state.subcategoryId = categoryIdMap[subSlug] || subId;
 
         document.querySelectorAll('#subcats .subcat-item').forEach(el => {
           el.classList.toggle('selected', el.dataset.sub === subSlug);
