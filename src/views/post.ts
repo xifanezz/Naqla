@@ -239,6 +239,10 @@ export function postListingPage(categories: any[], user?: any) {
         background: #5f4a82;
         color: #fff;
       }
+      .cat-item.selected svg {
+        stroke: #fff !important;
+        fill: none;
+      }
       .cat-item svg {
         width: 28px;
         height: 28px;

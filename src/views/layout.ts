@@ -15,6 +15,14 @@ export function layout(content: string, options: { title?: string; user?: any } 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; }
     body { font: 14px/1.6 'Readex Pro', sans-serif; background: #f6f2ef; color: #333; display: flex; flex-direction: column; }
+
+    /* Custom text selection - purple theme instead of default blue */
+    ::selection { background: #5f4a82; color: #fff; }
+    ::-moz-selection { background: #5f4a82; color: #fff; }
+
+    /* Disable text selection on interactive elements */
+    button, .btn, .cat-item, .nav a, .contact-opt, .subcat-item { user-select: none; -webkit-user-select: none; }
+
     a { color: #00c; text-decoration: none; }
     a:visited { color: #551a8b; }
     a:hover { text-decoration: underline; }
