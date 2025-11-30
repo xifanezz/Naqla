@@ -62,7 +62,8 @@ listings.get('/:id', async (c) => {
 
   const [listing] = await sql`
     SELECT l.*, c.name_ar as category_name, c.slug as category_slug,
-           u.name as user_name, u.phone as user_phone, u.avatar_url as user_avatar
+           u.name as user_name, u.phone as user_phone, u.avatar_url as user_avatar,
+           COALESCE(l.contact_phone, u.phone) as display_phone
     FROM listings l
     LEFT JOIN categories c ON l.category_id = c.id
     LEFT JOIN users u ON l.user_id = u.id
@@ -93,15 +94,15 @@ listings.post('/', async (c) => {
   }
 
   const body = await c.req.json();
-  const { title, description, price, price_type, category_id, city, neighborhood, latitude, longitude, images } = body;
+  const { title, description, price, price_type, category_id, city, neighborhood, latitude, longitude, images, contact_phone, contact_method } = body;
 
   if (!title || !city || !category_id) {
     return c.json({ error: 'الرجاء إدخال جميع البيانات المطلوبة' }, 400);
   }
 
   const [listing] = await sql`
-    INSERT INTO listings (user_id, category_id, title, description, price, price_type, city, neighborhood, latitude, longitude, images)
-    VALUES (${userId}, ${category_id}, ${title}, ${description || null}, ${price || null}, ${price_type || 'fixed'}, ${city}, ${neighborhood || null}, ${latitude || null}, ${longitude || null}, ${images || []})
+    INSERT INTO listings (user_id, category_id, title, description, price, price_type, city, neighborhood, latitude, longitude, images, contact_phone, contact_method)
+    VALUES (${userId}, ${category_id}, ${title}, ${description || null}, ${price || null}, ${price_type || 'fixed'}, ${city}, ${neighborhood || null}, ${latitude || null}, ${longitude || null}, ${images || []}, ${contact_phone || null}, ${contact_method || 'both'})
     RETURNING *
   `;
 
@@ -134,7 +135,7 @@ listings.put('/:id', async (c) => {
   }
 
   const body = await c.req.json();
-  const { title, description, price, price_type, category_id, city, neighborhood, images, status } = body;
+  const { title, description, price, price_type, category_id, city, neighborhood, images, status, contact_phone, contact_method } = body;
 
   const [listing] = await sql`
     UPDATE listings SET
@@ -147,6 +148,8 @@ listings.put('/:id', async (c) => {
       neighborhood = COALESCE(${neighborhood}, neighborhood),
       images = COALESCE(${images}, images),
       status = COALESCE(${status}, status),
+      contact_phone = COALESCE(${contact_phone}, contact_phone),
+      contact_method = COALESCE(${contact_method}, contact_method),
       updated_at = NOW()
     WHERE id = ${id}
     RETURNING *
