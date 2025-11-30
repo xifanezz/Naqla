@@ -671,7 +671,7 @@ export function postListingPage(categories: any[], user?: any) {
               <label>المدينة: *</label>
               <select id="city" required>
                 <option value="">اختر المدينة</option>
-                ${saudiCities.map(c => `<option value="${c}">${c}</option>`).join('')}
+                ${saudiCities.map(c => `<option value="${c}"${user?.city === c ? ' selected' : ''}>${c}</option>`).join('')}
               </select>
             </p>
             <p style="flex:1;">
@@ -780,7 +780,7 @@ export function postListingPage(categories: any[], user?: any) {
     </div>
 
     <script>
-      // State
+      // State - pre-filled with user's phone and city from profile
       const state = {
         step: 1,
         category: null,
@@ -790,7 +790,7 @@ export function postListingPage(categories: any[], user?: any) {
         description: '',
         price: null,
         priceType: 'fixed',
-        city: '',
+        city: '${user?.city || ''}',
         neighborhood: '',
         contactPhone: '${user?.phone || ''}',
         contactMethod: 'both',

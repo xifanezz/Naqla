@@ -198,7 +198,14 @@ pages.get('/register', (c) => {
 pages.get('/post', async (c) => {
   const categories = await sql`SELECT * FROM categories ORDER BY sort_order`;
   const session = await auth.api.getSession({ headers: c.req.raw.headers });
-  const user = session ? { id: session.user.id, name: session.user.name } : null;
+
+  let user = null;
+  if (session) {
+    // Fetch full user data including phone and city
+    const [userData] = await sql`SELECT id, name, phone, city FROM "user" WHERE id = ${session.user.id}`;
+    user = userData || { id: session.user.id, name: session.user.name };
+  }
+
   return c.html(postListingPage(categories, user));
 });
 
