@@ -11,6 +11,7 @@ import listings from './routes/listings';
 import categories from './routes/categories';
 import chat from './routes/chat';
 import user from './routes/user';
+import drafts from './routes/drafts';
 import pages from './routes/pages';
 import { serveStatic } from 'hono/bun';
 
@@ -52,6 +53,7 @@ app.route('/api/listings', listings);
 app.route('/api/categories', categories);
 app.route('/api/chat', chat);
 app.route('/api/user', user);
+app.route('/api/drafts', drafts);
 
 // Page Routes
 app.route('/', pages);

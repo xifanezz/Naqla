@@ -792,7 +792,7 @@ export function postListingPage(categories: any[], user?: any) {
         priceType: 'fixed',
         city: '',
         neighborhood: '',
-        contactPhone: '${user.phone || ''}',
+        contactPhone: '${user?.phone || ''}',
         contactMethod: 'both',
         images: []
       };
@@ -811,6 +811,9 @@ export function postListingPage(categories: any[], user?: any) {
         'نقل عفش|نقل اثاث': { cat: 'services', sub: 'labor-moving' },
         'صيانة|تصليح|فني': { cat: 'services', sub: 'skilled-trade' },
       };
+
+      // Debounce for draft saving
+      let saveTimeout = null;
 
       // Initialize
       document.addEventListener('DOMContentLoaded', () => {
@@ -1129,38 +1132,53 @@ export function postListingPage(categories: any[], user?: any) {
         }
       }
 
-      // Draft management
+      // Draft management - Server-side storage (syncs across devices)
       function saveDraft() {
-        const draft = {
-          ...state,
-          savedAt: Date.now()
-        };
-        localStorage.setItem('naqla_draft', JSON.stringify(draft));
+        // Debounce - wait 2 seconds after last change before saving
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(async () => {
+          try {
+            const draftData = { ...state };
+            // Don't save base64 images to server (too large), only save on submit
+            delete draftData.images;
+
+            await fetch('/api/drafts', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ draft: draftData })
+            });
+          } catch (e) {
+            console.error('Error saving draft:', e);
+          }
+        }, 2000);
       }
 
-      function checkDraft() {
-        const saved = localStorage.getItem('naqla_draft');
-        if (saved) {
-          try {
-            const draft = JSON.parse(saved);
-            // Check if draft is less than 7 days old
-            if (Date.now() - draft.savedAt < 7 * 24 * 60 * 60 * 1000) {
-              document.getElementById('draft-banner').classList.add('show');
-            } else {
-              localStorage.removeItem('naqla_draft');
-            }
-          } catch (e) {
-            localStorage.removeItem('naqla_draft');
+      async function checkDraft() {
+        try {
+          const response = await fetch('/api/drafts', {
+            credentials: 'include'
+          });
+          const data = await response.json();
+
+          if (data.draft && data.draft.title) {
+            // Show banner if draft has content
+            document.getElementById('draft-banner').classList.add('show');
           }
+        } catch (e) {
+          console.error('Error checking draft:', e);
         }
       }
 
-      function loadDraft() {
-        const saved = localStorage.getItem('naqla_draft');
-        if (saved) {
-          try {
-            const draft = JSON.parse(saved);
-            Object.assign(state, draft);
+      async function loadDraft() {
+        try {
+          const response = await fetch('/api/drafts', {
+            credentials: 'include'
+          });
+          const data = await response.json();
+
+          if (data.draft) {
+            Object.assign(state, data.draft);
 
             // Restore UI
             if (state.category) {
@@ -1182,18 +1200,23 @@ export function postListingPage(categories: any[], user?: any) {
               el.classList.toggle('selected', el.dataset.method === state.contactMethod);
             });
 
-            updateImagePreview();
             goToStep(state.step || 1);
-
-          } catch (e) {
-            console.error('Error loading draft:', e);
           }
+        } catch (e) {
+          console.error('Error loading draft:', e);
         }
         document.getElementById('draft-banner').classList.remove('show');
       }
 
-      function discardDraft() {
-        localStorage.removeItem('naqla_draft');
+      async function discardDraft() {
+        try {
+          await fetch('/api/drafts', {
+            method: 'DELETE',
+            credentials: 'include'
+          });
+        } catch (e) {
+          console.error('Error discarding draft:', e);
+        }
         document.getElementById('draft-banner').classList.remove('show');
       }
 
@@ -1231,8 +1254,8 @@ export function postListingPage(categories: any[], user?: any) {
             throw new Error(data.error || 'حدث خطأ');
           }
 
-          // Clear draft and redirect
-          localStorage.removeItem('naqla_draft');
+          // Clear draft from server and redirect
+          fetch('/api/drafts', { method: 'DELETE', credentials: 'include' });
           location.href = '/listing/' + data.listing.id;
 
         } catch (err) {
