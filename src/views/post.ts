@@ -471,6 +471,10 @@ export function postListingPage(categories: any[], user?: any) {
         display: flex;
         align-items: center;
         gap: 6px;
+        text-decoration: none !important;
+      }
+      .btn-next:hover, .btn-prev:hover, .btn-submit:hover {
+        text-decoration: none !important;
       }
       .btn-next, .btn-submit {
         background: #5f4a82;
@@ -590,11 +594,11 @@ export function postListingPage(categories: any[], user?: any) {
         <div class="steps">
           <div class="step active" data-step="1">
             <div class="step-num">1</div>
-            <span class="step-label">القسم</span>
+            <span class="step-label">التفاصيل</span>
           </div>
           <div class="step" data-step="2">
             <div class="step-num">2</div>
-            <span class="step-label">التفاصيل</span>
+            <span class="step-label">القسم</span>
           </div>
           <div class="step" data-step="3">
             <div class="step-num">3</div>
@@ -606,32 +610,8 @@ export function postListingPage(categories: any[], user?: any) {
           </div>
         </div>
 
-        <!-- Step 1: Category Selection -->
+        <!-- Step 1: Details (Title first for auto-detection) -->
         <div class="form-step active" data-step="1">
-          <h3 style="margin-bottom:16px;">اختر القسم الرئيسي</h3>
-
-          <div class="cat-grid" id="main-cats">
-            ${mainCategories.map(cat => `
-              <div class="cat-item" data-cat="${cat.id}">
-                ${getCategoryIcon(cat.id)}
-                <span>${cat.name_ar}</span>
-              </div>
-            `).join('')}
-          </div>
-
-          <div id="subcats-container" style="display:none;">
-            <h3 style="margin-bottom:16px;">اختر القسم الفرعي</h3>
-            <div class="subcat-list" id="subcats"></div>
-          </div>
-
-          <div class="form-nav">
-            <div></div>
-            <button class="btn-next" id="step1-next" disabled>التالي ←</button>
-          </div>
-        </div>
-
-        <!-- Step 2: Details -->
-        <div class="form-step" data-step="2">
           <h3 style="margin-bottom:16px;">تفاصيل الإعلان</h3>
 
           <!-- AI suggestion -->
@@ -719,8 +699,32 @@ export function postListingPage(categories: any[], user?: any) {
           </div>
 
           <div class="form-nav">
+            <div></div>
+            <button class="btn-next" id="step1-next">التالي ←</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Category Selection -->
+        <div class="form-step" data-step="2">
+          <h3 style="margin-bottom:16px;">اختر القسم الرئيسي</h3>
+
+          <div class="cat-grid" id="main-cats">
+            ${mainCategories.map(cat => `
+              <div class="cat-item" data-cat="${cat.id}">
+                ${getCategoryIcon(cat.id)}
+                <span>${cat.name_ar}</span>
+              </div>
+            `).join('')}
+          </div>
+
+          <div id="subcats-container" style="display:none;">
+            <h3 style="margin-bottom:16px;">اختر القسم الفرعي</h3>
+            <div class="subcat-list" id="subcats"></div>
+          </div>
+
+          <div class="form-nav">
             <button class="btn-prev" onclick="goToStep(1)">→ السابق</button>
-            <button class="btn-next" id="step2-next">التالي ←</button>
+            <button class="btn-next" id="step2-next" disabled>التالي ←</button>
           </div>
         </div>
 
@@ -880,10 +884,32 @@ export function postListingPage(categories: any[], user?: any) {
           });
         });
 
-        // Step 2 next button
-        document.getElementById('step2-next').addEventListener('click', () => {
-          if (validateStep2()) goToStep(3);
+        // Step 1 next button (Details -> Category)
+        document.getElementById('step1-next').addEventListener('click', () => {
+          if (validateStep1()) goToStep(2);
         });
+
+        // Step 2 next button (Category -> Images)
+        document.getElementById('step2-next').addEventListener('click', () => {
+          if (state.subcategoryId) goToStep(3);
+        });
+      }
+
+      function validateStep1() {
+        const title = document.getElementById('title').value.trim();
+        const city = document.getElementById('city').value;
+
+        if (!title) {
+          alert('الرجاء إدخال عنوان الإعلان');
+          document.getElementById('title').focus();
+          return false;
+        }
+        if (!city) {
+          alert('الرجاء اختيار المدينة');
+          document.getElementById('city').focus();
+          return false;
+        }
+        return true;
       }
 
       function selectMainCategory(catId) {
@@ -910,7 +936,7 @@ export function postListingPage(categories: any[], user?: any) {
         });
 
         container.style.display = 'block';
-        document.getElementById('step1-next').disabled = true;
+        document.getElementById('step2-next').disabled = true;
         saveDraft();
       }
 
@@ -922,8 +948,7 @@ export function postListingPage(categories: any[], user?: any) {
           el.classList.toggle('selected', el.dataset.sub === subSlug);
         });
 
-        document.getElementById('step1-next').disabled = false;
-        document.getElementById('step1-next').onclick = () => goToStep(2);
+        document.getElementById('step2-next').disabled = false;
         saveDraft();
       }
 
@@ -988,21 +1013,6 @@ export function postListingPage(categories: any[], user?: any) {
         if (step === 4) updatePreview();
 
         saveDraft();
-      }
-
-      function validateStep2() {
-        const title = document.getElementById('title').value.trim();
-        const city = document.getElementById('city').value;
-
-        if (!title) {
-          alert('الرجاء إدخال عنوان الإعلان');
-          return false;
-        }
-        if (!city) {
-          alert('الرجاء اختيار المدينة');
-          return false;
-        }
-        return true;
       }
 
       // Image handling
