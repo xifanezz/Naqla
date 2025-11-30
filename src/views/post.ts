@@ -679,7 +679,7 @@ export function postListingPage(categories: any[], user?: any) {
 
           <p>
             <label>رقم الجوال:</label>
-            <input type="tel" id="contact_phone" dir="ltr" placeholder="05xxxxxxxx" value="${user.phone || ''}">
+            <input type="tel" id="contact_phone" dir="ltr" placeholder="05xxxxxxxx" value="${user.phone || ''}" style="text-align:center;">
             <small style="color:#888;">سيظهر هذا الرقم للمشترين</small>
           </p>
 
